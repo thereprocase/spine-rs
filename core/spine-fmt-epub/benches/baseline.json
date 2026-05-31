@@ -1,0 +1,25 @@
+{
+  "_README": "Pinned baseline + ceiling for `cargo bench -p spine-fmt-epub --bench read_paths`. Conventions match `core/spine-bf/benches/baseline.json` (4434edd): baseline_us = dev-hardware median at smoke config (--warm-up-time 1 --measurement-time 2 --sample-size 20). ceiling_us = phase-1 generous (~3-5× baseline) to absorb GitHub Actions ubuntu-latest variance. informational entries reserve slots for fixtures that haven't landed yet (typical, pathological); they will read as `_missing_` in CI step summaries but never count as regressions. Procedure for adding fixtures + promoting reservations to gates: see benches/fixtures/README.md.",
+
+  "read_epub small (Strict — no fixers)": {
+    "baseline_us": 8500,
+    "ceiling_us": 20000,
+    "note": "8.5 ms baseline on dev hardware (WSL2 NVMe) — read_epub cost is dominated by ZIP central-directory walks + per-entry decompression + multiple quick-xml passes (container.xml, OPF, nav.xhtml). Per-entry overhead matters more than fixture size; 7 zip entries → ~7 × ~1 ms each. Re-pin against ubuntu-latest CI medians once observed."
+  },
+  "read_epub small (ProjectGutenberg — full fixer chain)": {
+    "baseline_us": 6800,
+    "ceiling_us": 20000,
+    "note": "Surprisingly faster than Strict in initial smoke (6.8 ms vs 8.5 ms); likely order-of-execution / fs-cache effect since both benches run on the same fixture. Investigate by swapping bench order or running with `--baseline` separately. Phase-2 ceiling re-pin should account for whichever order CI runs them in."
+  },
+
+  "read_epub typical (StandardEbooks fixture)": {
+    "baseline_us": 0,
+    "informational": true,
+    "note": "Fixture not yet provided. Target: a Standard Ebooks gold-standard EPUB (~50-200 KB, 10-30 chapters, NCX + nav). Add to benches/fixtures/typical.epub and unflag this entry."
+  },
+  "read_epub pathological (PG-source needs fixers)": {
+    "baseline_us": 0,
+    "informational": true,
+    "note": "Fixture not yet provided. Target: a Project Gutenberg auto-EPUB that fails Strict (manifest items pointing at missing hrefs, deduplicate-needed entries, encoding-cleanup-needed). Add to benches/fixtures/pathological.epub and unflag this entry."
+  }
+}

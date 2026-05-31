@@ -1,0 +1,30 @@
+[package]
+name = "spine-jni"
+version = "0.1.0"
+edition = "2021"
+
+# JNI consumers load this as a shared library via System.loadLibrary. cdylib is
+# required for the Android Gradle build to copy a .so per ABI into the APK.
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# spine-srv is the only crate we link — JNI dispatches straight into the axum
+# router. `--no-default-features --features mobile` is LOAD-BEARING: without
+# the `mobile` feature flag, spine_srv::init_mobile_logging does not exist
+# (it is gated on #[cfg(feature = "mobile")]) and the initCore call site will
+# fail to compile. Removing `features = ["mobile"]` from this entry silently
+# drops Android logcat support and breaks the build. See TECH_DEBT §4.1.
+spine-srv = { path = "../spine-srv", default-features = false, features = ["mobile"] }
+spine-api = { path = "../spine-api" }
+calibre-db = { path = "../calibre-db" }
+spine-db = { path = "../spine-db" }
+spine-meta = { path = "../spine-meta" }
+
+jni = "0.21"
+axum = { workspace = true }
+tokio = { workspace = true }
+tower = { workspace = true, features = ["util"] }
+serde_json = { workspace = true }
+once_cell = { workspace = true }
+tracing = { workspace = true }

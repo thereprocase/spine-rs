@@ -1,0 +1,59 @@
+/* Reader-side CSS. Token values are baked at runtime from the RN side via
+   CSS custom properties patched onto :root, so we can swap themes without
+   reloading the WebView. */
+:root {
+  --reader-bg: #1a1a1c;
+  --reader-ink: #d8d6d2;
+  --reader-dim: #7f7e7a;
+  --reader-rule: #2a2a2e;
+  --reader-accent: #c8a15a;
+  --reader-font-family: Georgia, "Source Serif 4", "Iowan Old Style", "Times New Roman", serif;
+  --reader-font-size: 17pt;
+  --reader-line-height: 1.6;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background: var(--reader-bg);
+  color: var(--reader-ink);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+#viewer {
+  position: fixed;
+  inset: 0;
+  background: var(--reader-bg);
+}
+
+/* iframe injected by epubjs */
+#viewer iframe {
+  border: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--reader-bg);
+}
+
+#status {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font: 500 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  color: var(--reader-dim);
+  background: var(--reader-bg);
+  z-index: 10;
+  padding: 24px;
+  text-align: center;
+}
+#status.show { display: flex; }
+#status.error { color: #d07060; }

@@ -1,0 +1,135 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+
+jobs:
+  fmt:
+    name: rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain from rust-toolchain.toml
+        run: rustup show
+        working-directory: core
+      - name: cargo fmt --all --check
+        run: cargo fmt --all --check
+        working-directory: core
+
+  test-linux:
+    name: test (ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install toolchain from rust-toolchain.toml
+        run: rustup show
+        working-directory: core
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core -> target
+      - name: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
+      - name: pnpm test (vitest + cargo test)
+        run: pnpm test
+      - name: pnpm --filter appsdesktop build
+        run: pnpm --filter appsdesktop build
+
+  test-windows:
+    name: test (windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install toolchain from rust-toolchain.toml
+        shell: bash
+        run: rustup show
+        working-directory: core
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core -> target
+          key: windows
+      - name: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
+      - name: pnpm test (vitest + cargo test)
+        run: pnpm test
+      - name: pnpm --filter appsdesktop build
+        run: pnpm --filter appsdesktop build
+      - name: cargo check (apps/desktop/src-tauri)
+        shell: bash
+        run: cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml
+
+  android-jni:
+    name: android jni cross-compile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain from rust-toolchain.toml
+        run: rustup show
+        working-directory: core
+      - name: Add aarch64-linux-android target
+        run: rustup target add aarch64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core -> target
+          key: android-jni
+      - uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r27c
+          add-to-path: false
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-ndk
+      - name: cargo ndk build -p spine-jni
+        working-directory: core
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: cargo ndk --target arm64-v8a --platform 24 build --release -p spine-jni
+      - name: Verify libspine_jni.so is a valid ELF
+        run: |
+          set -euo pipefail
+          SO=core/target/aarch64-linux-android/release/libspine_jni.so
+          test -f "$SO"
+          file "$SO" | tee /dev/stderr | grep -q "ELF 64-bit LSB shared object, ARM aarch64"
+      - name: Verify JNI Java_* exports are present
+        # Guards against: a Rust-side rename silently breaking the Kotlin
+        # SpineCore contract, or R8 keep-rules misfiring in a release
+        # variant (once §4.14's isMinifyEnabled=true lands). The three
+        # symbols below are the entire JNI surface between Kotlin's
+        # `SpineCore` object and the Rust core — any of them missing
+        # from the built .so means UnsatisfiedLinkError at runtime.
+        run: |
+          set -euo pipefail
+          SO=core/target/aarch64-linux-android/release/libspine_jni.so
+          # GNU readelf on Ubuntu handles aarch64 ELFs out of the box.
+          SYMS=$(readelf -W --dyn-syms "$SO" | awk '$4 == "FUNC" && $5 == "GLOBAL" && $7 != "UND" { print $8 }')
+          echo "$SYMS"
+          for expected in \
+            Java_com_thereprocase_spine_SpineCore_initCore \
+            Java_com_thereprocase_spine_SpineCore_callApi \
+            Java_com_thereprocase_spine_SpineCore_shutdownCore; do
+            grep -qxF "$expected" <<<"$SYMS" || {
+              echo "!! missing JNI export: $expected" >&2
+              exit 1
+            }
+          done
+          echo ">> all 3 JNI Java_* symbols present + exported"

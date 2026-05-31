@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--
+  Spine reader host page. Loads foliate-js (vendored under this same
+  /assets/foliate/ tree by scripts/vendor-foliate.mjs) via spine-host.mjs
+  and opens the EPUB whose filename is published by Kotlin via
+  window.SpineBridge.
+
+  Critical property: EPUB bytes are NEVER loaded as one ArrayBuffer.
+  Foliate-js's `new EPUB({ loadText, loadBlob, getSize })` constructor
+  takes per-resource callbacks; each loadText/loadBlob in
+  spine-host.mjs is a single fetch() against the WebViewAssetLoader-
+  served base URL, which streams one zip entry per request via
+  EpubResourcePathHandler in ReaderActivity.kt. That's how the
+  big-book class of bugs stays closed.
+
+  CSP notes after the N1 code review:
+  - default-src 'self' (no `blob:` fallback — narrowed per review item #1).
+  - style-src 'self' 'unsafe-inline' — relaxed for paginator. The
+    N1 review claimed the renderer had been refactored to drop inline
+    styles, but on-device smoke (0.1.3) hit
+    `Refused to apply inline style ... 'style-src 'self''` from
+    foliate-js's view.js:254 layout pass. Inline styles cannot
+    execute code in modern WebViews (CSS expression() is dead), so
+    'unsafe-inline' on style-src is much safer than on script-src.
+    script-src stays tight.
+  - script-src 'self' (host JS moved to spine-host.mjs — review item #1).
+  - blob: + data: kept only on directives that actually need them
+    (img/connect/frame/object) for foliate's per-spine-item iframes.
+-->
+<title>Spine Reader</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' blob:; style-src-elem 'self' 'unsafe-inline' blob:; img-src 'self' blob: data:; connect-src 'self' blob: data:; frame-src blob: data:; object-src blob: data:; form-action 'none';">
+<link rel="stylesheet" href="./spine-host.css">
+</head>
+<body>
+<foliate-view id="view"></foliate-view>
+<div id="status" aria-live="polite">
+  <div class="label" id="status-label">Loading EPUB…</div>
+</div>
+<div id="error" hidden role="alert">
+  <div class="title" id="error-title">Could not open book</div>
+  <div class="detail" id="error-detail"></div>
+</div>
+<script type="module" src="./spine-host.mjs"></script>
+</body>
+</html>

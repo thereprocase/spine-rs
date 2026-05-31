@@ -1,0 +1,66 @@
+[package]
+name = "spine-srv"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+# The `desktop` feature pulls in layers and behaviour that only make sense when
+# the router is served over a browser-reachable transport (CORS allow-list,
+# future static-file serving). Mobile embedders build with
+# `--no-default-features --features mobile` so the cdylib doesn't ship code it
+# can't use — see TECH_DEBT §4.1.
+default = ["desktop"]
+desktop = ["tower-http/cors"]
+mobile = []
+
+# The `spine-srv` binary is the standalone TCP sidecar and has no business
+# existing on a mobile target. Gating it on `desktop` lets
+# `--no-default-features --features mobile` build the library without the bin
+# resolving `create_desktop_router`.
+[[bin]]
+name = "spine-srv"
+path = "src/main.rs"
+required-features = ["desktop"]
+
+[dependencies]
+spine-api = { path = "../spine-api" }
+calibre-db = { path = "../calibre-db" }
+spine-db = { path = "../spine-db" }
+spine-bf = { path = "../spine-bf" }
+spine-meta = { path = "../spine-meta" }
+spine-marc = { path = "../spine-marc" }
+axum = { workspace = true }
+tokio = { workspace = true }
+tower = { workspace = true, features = ["util"] }
+tower-http = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+rusqlite = { workspace = true }
+base64 = "0.22.1"
+uuid = { workspace = true, features = ["v4"] }
+chrono.workspace = true
+futures = "0.3.32"
+zip = { workspace = true }
+mime_guess = "2.0.5"
+async-trait = "0.1.80"
+thiserror = { workspace = true }
+oxrdf = { workspace = true }
+subtle = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59.0", features = ["Win32_Security", "Win32_Security_Authorization", "Win32_System_Memory"] }
+
+# android_logger routes `log` crate records to logcat. Gated on target_os so a
+# host `cargo check --features mobile` still compiles — the crate itself
+# refuses to build on non-Android targets.
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.14"
+log = "0.4"
+
+[dev-dependencies]
+tower = { workspace = true, features = ["util"] }
+tokio = { workspace = true, features = ["full", "test-util"] }
+tempfile = "3.27.0"
+mockito = "1.7.2"

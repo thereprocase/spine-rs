@@ -1,0 +1,10 @@
+[package]
+name = "spine-marc"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+quick-xml = { workspace = true }
+thiserror = { workspace = true }
+spine-api = { path = "../spine-api" }

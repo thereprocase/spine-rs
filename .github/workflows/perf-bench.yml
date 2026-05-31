@@ -1,0 +1,101 @@
+name: Perf bench (Sprint 19 — write paths + spine-fmt-epub read)
+
+# Runs the criterion bench harnesses for spine-bf write paths AND
+# spine-fmt-epub::read_epub against each PR that touches the relevant code,
+# and posts measured-vs-baseline-vs-ceiling tables to the GitHub step summary.
+#
+# Phase 1 (today): report-only. The workflow always exits 0; the tables make
+# regressions visible but do not block merge.
+#
+# Phase 2 (after observing 5-10 CI runs to characterize variance): flip the
+# `PERF_FAIL_ON_REGRESSION` env var below to "1" and re-pin baseline JSON
+# files against CI hardware.
+#
+# Methodology + re-pin procedure: see internal design notes on threshold selection.
+
+on:
+  pull_request:
+    paths:
+      - 'core/spine-bf/**'
+      - 'core/spine-db/**'
+      - 'core/spine-fmt-epub/**'
+      - 'core/spine-oeb/**'
+      - 'core/Cargo.toml'
+      - 'core/Cargo.lock'
+      - 'rust-toolchain.toml'
+      - '.github/workflows/perf-bench.yml'
+      - '.github/scripts/perf_compare.py'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: '0'
+  PERF_FAIL_ON_REGRESSION: '0'
+
+jobs:
+  bench:
+    name: bench (ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain from rust-toolchain.toml
+        run: rustup show
+        working-directory: core
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core -> target
+          key: perf-bench
+
+      - name: Run spine-bf write-path benches
+        working-directory: core
+        # Smoke config (`--warm-up-time 1 --measurement-time 2 --sample-size 20`)
+        # is intentional — it matches the config the pinned baselines in
+        # `core/spine-bf/benches/baseline.json` were measured under. Three of
+        # the benches (warm-vocab and concurrent-write) accumulate graph state
+        # across iterations, so longer measurement windows produce systematically
+        # slower medians (more iters → larger graph → more compounding cost per
+        # call). Switching to a longer window without re-pinning baselines would
+        # make every CI run look like a regression. See
+        # See internal design notes, "Special case" section.
+        run: |
+          set -euo pipefail
+          cargo bench -p spine-bf --bench write_paths -- \
+            --warm-up-time 1 --measurement-time 2 --sample-size 20 \
+            2>&1 | tee /tmp/bench-spine-bf.txt
+
+      - name: Run spine-fmt-epub read-path benches
+        working-directory: core
+        run: |
+          set -euo pipefail
+          cargo bench -p spine-fmt-epub --bench read_paths -- \
+            --warm-up-time 1 --measurement-time 2 --sample-size 20 \
+            2>&1 | tee /tmp/bench-spine-fmt-epub.txt
+
+      - name: Compare spine-bf to baseline + render summary
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/perf_compare.py \
+            /tmp/bench-spine-bf.txt \
+            core/spine-bf/benches/baseline.json \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Compare spine-fmt-epub to baseline + render summary
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/perf_compare.py \
+            /tmp/bench-spine-fmt-epub.txt \
+            core/spine-fmt-epub/benches/baseline.json \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload raw bench output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-output
+          path: |
+            /tmp/bench-spine-bf.txt
+            /tmp/bench-spine-fmt-epub.txt
+          retention-days: 30

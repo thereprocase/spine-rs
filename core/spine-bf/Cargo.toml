@@ -1,0 +1,21 @@
+[package]
+name = "spine-bf"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+oxrdf = { workspace = true }
+spine-api = { path = "../spine-api" }
+spine-db = { path = "../spine-db" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+tracing = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "write_paths"
+harness = false

@@ -1,0 +1,19 @@
+[package]
+name = "calibre-db"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rusqlite = { workspace = true, features = ["functions", "collation"] }
+spine-api = { path = "../spine-api" }
+spine-db = { path = "../spine-db" }
+spine-bf = { path = "../spine-bf" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3.10"

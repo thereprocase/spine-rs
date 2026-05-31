@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Pre-alpha manifest. No runtime permissions requested: the Storage Access
+  Framework (ACTION_OPEN_DOCUMENT) and FileProvider-based ACTION_SEND both
+  operate on user-granted URIs and require no declared permissions.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:name=".SpineApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Spine"
+        tools:targetApi="31"
+        xmlns:tools="http://schemas.android.com/tools">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Spine">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Open EPUB / ZIP from a file manager via "Open with".
+                 `content://` only — `file://` was deliberately removed
+                 (code review N2 #1: a malicious app on a pre-API-29
+                 target could craft `file:///data/data/.../files/...`
+                 to point our import handler at our own private
+                 storage). SAF "Open with" already issues `content://`
+                 URIs; nothing legitimate needs the `file://` route. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/epub+zip" />
+                <data android:mimeType="application/zip" />
+                <data android:mimeType="application/x-zip-compressed" />
+            </intent-filter>
+
+            <!-- Single share (EPUB or ZIP) from Drive, Files, etc.
+                 `content://` only — file:// is locked out for the same
+                 reason as the VIEW filter above. A hostile app crafting
+                 ACTION_SEND with EXTRA_STREAM = file:///data/data/.../...
+                 would otherwise reach IncomingShares.classify, which
+                 dispatches on MIME + filename suffix, not scheme. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/epub+zip" />
+                <data android:mimeType="application/zip" />
+                <data android:mimeType="application/x-zip-compressed" />
+            </intent-filter>
+
+            <!-- Multi-EPUB share (e.g. picking several files in Files
+                 → Share → Spine). content:// only, same rationale. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/epub+zip" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ReaderActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Spine" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+    </application>
+
+</manifest>

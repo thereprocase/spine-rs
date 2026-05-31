@@ -1,0 +1,134 @@
+/* SPINE design tokens — CSS custom properties.
+ *
+ * Two themes — dark (default) and light. Theme is selected via the
+ * `data-theme` attribute on documentElement; App.tsx writes it from
+ * persisted state. Components consume tokens through `tokens.ts`'s
+ * SPINE object whose values are `var(--spine-*)` strings, so a theme
+ * flip reflows the entire chrome at zero render cost.
+ *
+ * Light palette is a calibrated inverse of the warm-graphite dark
+ * palette — same accent (slightly darkened for contrast on light
+ * surfaces), same semantic hues, librarian-sober throughout. Mostly
+ * verified against the prototype's design intent, not pixel-perfect.
+ */
+
+:root,
+:root[data-theme="dark"] {
+  /* Surfaces — warm-leaning neutral graphite, very low saturation */
+  --spine-bg:          #17171a;
+  --spine-panel:       #1e1e22;
+  --spine-canvas:      #232328;
+  --spine-canvas-alt:  #1a1a1e;
+  --spine-surface:     #2a2a30;
+  --spine-surface-hi:  #34343b;
+  --spine-border:      #34343b;
+  --spine-border-soft: #2a2a30;
+  --spine-border-hi:   #45454d;
+
+  /* Ink */
+  --spine-text:        #ebeae7;
+  --spine-text-mid:    #b0afac;
+  --spine-text-dim:    #7c7b77;
+  --spine-text-faint:  #5a5955;
+  --spine-ink-invert:  #17171a;
+
+  /* Accents + semantic */
+  --spine-accent:      #c8a15a;
+  --spine-accent-hi:   #e4b84f;
+  --spine-accent-dim:  #6b5430;
+  --spine-oxblood:     #a83040;
+  --spine-ok:          #8ab07a;
+  --spine-warn:        #d4a85a;
+  --spine-alert:       #d07060;
+  --spine-link:        #94b0c4;
+
+  /* Cover placeholder spine (the visible spine-back/spine-front strip
+   * left of every placeholder cover). Calibrated for warm graphite. */
+  --spine-cover-spine-front: #3a3a40;
+  --spine-cover-spine-back:  #4a4a52;
+  /* Inset 1px rim that sits inside the cover's outer boxShadow — gives
+   * the bevel a faint highlight on dark, vanishes on light. */
+  --spine-cover-inset-rim:   rgba(255, 255, 255, 0.04);
+
+  /* Modal / dialog overlays + shadow. Dark theme uses opaque-leaning
+   * black; light theme uses a softer black at lower alpha to avoid
+   * crushing the cream background. */
+  --spine-overlay:        rgba(0, 0, 0, 0.4);
+  --spine-shadow-modal:   0 30px 80px rgba(0, 0, 0, 0.6),
+                          0 10px 30px rgba(0, 0, 0, 0.4);
+  --spine-shadow-popover: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --spine-shadow-soft:    0 1px 2px rgba(0, 0, 0, 0.4);
+
+  /* Badge border alphas — semantic hue at low alpha so the chip reads
+   * as a hue-tinted outline rather than a colored block. */
+  --spine-badge-border-ok:     rgba(138, 176, 122, 0.30);
+  --spine-badge-border-warn:   rgba(212, 168, 90, 0.30);
+  --spine-badge-border-alert:  rgba(208, 112, 96, 0.35);
+  --spine-badge-border-accent: rgba(200, 161, 90, 0.30);
+
+  /* Typography stacks (theme-invariant) */
+  --spine-font-sans:  "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --spine-font-mono:  "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --spine-font-serif: "Source Serif 4", "Source Serif Pro", Georgia, serif;
+}
+
+:root[data-theme="light"] {
+  /* Surfaces — warm cream-to-tan, librarian-sober and matched to the
+   * brass accent so the design language stays cohesive across themes. */
+  --spine-bg:          #f5f1e8;
+  --spine-panel:       #ede8db;
+  --spine-canvas:      #faf6ec;
+  --spine-canvas-alt:  #f0ebde;
+  --spine-surface:     #e6dfd0;
+  --spine-surface-hi:  #d9d0bc;
+  --spine-border:      #d9d0bc;
+  --spine-border-soft: #e6dfd0;
+  --spine-border-hi:   #a89978;
+
+  /* Ink — flipped polarity, same warmth */
+  --spine-text:        #1f1c17;
+  --spine-text-mid:    #4f493e;
+  --spine-text-dim:    #6f685a;
+  --spine-text-faint:  #908675;
+  --spine-ink-invert:  #faf6ec;
+
+  /* Accents — slightly darkened brass + tuned semantics for light bg */
+  --spine-accent:      #a07530;
+  --spine-accent-hi:   #c89020;
+  --spine-accent-dim:  #d8b870;
+  --spine-oxblood:     #8c2530;
+  --spine-ok:          #5a7a48;
+  --spine-warn:        #b07a25;
+  --spine-alert:       #a83020;
+  --spine-link:        #426078;
+
+  /* Cover placeholder spine — tan-on-cream so the placeholder reads
+   * as a book on a shelf rather than a punched-out hole. */
+  --spine-cover-spine-front: #b09870;
+  --spine-cover-spine-back:  #c8b48c;
+  /* Inset rim — light/warm-graphite edge, near-invisible on cream so
+   * it doesn't fight the warm-tan body of the cover. */
+  --spine-cover-inset-rim:   rgba(40, 30, 20, 0.05);
+
+  /* Modal overlays — softer alpha on cream; shadows still reach for
+   * depth but at lower amplitude. */
+  --spine-overlay:        rgba(40, 30, 20, 0.25);
+  --spine-shadow-modal:   0 24px 60px rgba(40, 30, 20, 0.20),
+                          0 8px 20px rgba(40, 30, 20, 0.12);
+  --spine-shadow-popover: 0 10px 28px rgba(40, 30, 20, 0.18);
+  --spine-shadow-soft:    0 1px 2px rgba(40, 30, 20, 0.15);
+
+  /* Badge borders — same hue logic, slightly higher alpha because
+   * cream → tinted outline needs more contrast than graphite does. */
+  --spine-badge-border-ok:     rgba(90, 122, 72, 0.40);
+  --spine-badge-border-warn:   rgba(176, 122, 37, 0.40);
+  --spine-badge-border-alert:  rgba(168, 48, 32, 0.40);
+  --spine-badge-border-accent: rgba(160, 117, 48, 0.40);
+}
+
+/* All mono numerals get tabular-nums by default — per design spec,
+ * every identifier/count/date-in-mono must align across rows. */
+.spine-mono,
+[style*="--spine-font-mono"] {
+  font-variant-numeric: tabular-nums;
+}

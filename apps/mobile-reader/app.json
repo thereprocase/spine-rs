@@ -1,0 +1,102 @@
+{
+  "expo": {
+    "name": "Spine Reader",
+    "slug": "spine-reader",
+    "version": "0.3.12",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "spine",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.thereprocase.spinereader"
+    },
+    "android": {
+      "package": "com.thereprocase.spinereader",
+      "versionCode": 47,
+      "adaptiveIcon": {
+        "backgroundColor": "#17171a",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT", "BROWSABLE"],
+          "data": [
+            { "scheme": "content", "mimeType": "application/epub+zip" },
+            { "scheme": "file", "mimeType": "application/epub+zip" },
+            { "scheme": "content", "mimeType": "application/x-epub+zip" },
+            { "scheme": "file", "mimeType": "application/x-epub+zip" },
+            { "scheme": "content", "mimeType": "application/zip" },
+            { "scheme": "file", "mimeType": "application/zip" },
+            { "scheme": "content", "mimeType": "application/x-zip-compressed" },
+            { "scheme": "file", "mimeType": "application/x-zip-compressed" },
+            { "scheme": "content", "mimeType": "application/octet-stream" },
+            { "scheme": "file", "mimeType": "application/octet-stream" }
+          ]
+        },
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT", "BROWSABLE"],
+          "data": [
+            { "scheme": "file", "host": "*", "pathPattern": ".*\\.epub" },
+            { "scheme": "content", "host": "*", "pathPattern": ".*\\.epub" },
+            { "scheme": "file", "host": "*", "pathPattern": ".*\\.zip" },
+            { "scheme": "content", "host": "*", "pathPattern": ".*\\.zip" }
+          ]
+        }
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#17171a"
+        }
+      ],
+      [
+        "expo-document-picker",
+        {
+          "iCloudContainerEnvironment": "Production"
+        }
+      ],
+      [
+        "expo-share-intent",
+        {
+          "androidIntentFilters": [
+            "application/epub+zip",
+            "application/x-epub+zip",
+            "application/zip",
+            "application/x-zip-compressed",
+            "application/octet-stream"
+          ],
+          "androidMultiIntentFilters": [
+            "application/epub+zip",
+            "application/x-epub+zip",
+            "application/zip",
+            "application/x-zip-compressed",
+            "application/octet-stream"
+          ]
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}

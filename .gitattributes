@@ -1,0 +1,76 @@
+# Enforce consistent line endings + line-ending policy for tools that care.
+# Catches the WSL/NTFS core.autocrlf drift that bit Sprint 3 session 2's worktree migration.
+
+* text=auto eol=lf
+
+# Binary types — never touch line endings.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.xz binary
+*.bz2 binary
+*.tar binary
+*.7z binary
+*.epub binary
+*.mobi binary
+*.azw3 binary
+*.db binary
+*.sqlite binary
+*.sqlite3 binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.so binary
+*.dll binary
+*.dylib binary
+*.exe binary
+*.jar binary
+*.aar binary
+*.apk binary
+*.msi binary
+
+# Shell scripts — must be LF (bash rejects CRLF).
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Gradle / Java / Kotlin — LF.
+*.gradle text eol=lf
+*.kts text eol=lf
+*.java text eol=lf
+*.kt text eol=lf
+*.kts text eol=lf
+
+# Python, Rust, JS/TS, YAML, TOML, JSON — LF.
+*.py text eol=lf
+*.rs text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.xml text eol=lf
+*.svg text eol=lf
+
+# Windows-only — tolerate CRLF in case someone adds a .cmd/.bat/.ps1.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Known executable shipped in-tree.
+apps/mobile/android/gradlew text eol=lf

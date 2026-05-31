@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  FileProvider path config for ShareIntents.
+
+  `files-path` with name="books" exposes filesDir/books/ under the provider
+  authority ${applicationId}.fileprovider. ShareIntents.kt rehydrates a
+  content:// URI via FileProvider.getUriForFile, grants read permission to
+  the target app, and sends MIME application/epub+zip.
+
+  No other directories are exposed. Do not add external-path entries
+  without a concrete reason — the pre-alpha is app-private only (see
+  TECH_DEBT §4.4).
+-->
+<paths>
+    <files-path name="books" path="books/" />
+</paths>

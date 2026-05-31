@@ -1,0 +1,134 @@
+name: Release
+
+# Windows MSI (alpha ring) + Android APK artifacting.
+#
+# Fires on:
+#   - workflow_dispatch: manual, any branch
+#   - push of a tag matching v*: e.g. v0.26.1141
+#
+# The scripts (scripts/build-alpha.sh, scripts/build-apk.sh) are the source of
+# truth; this workflow provisions the toolchain then calls them. Artifacts are
+# retained 30 days and visible on the run's Summary page.
+#
+# APK currently goes honest-red at :app:assembleDebug until Sprint 2 Kotlin
+# lands (no MainActivity.kt / etc.). That failure IS the validation signal.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+
+jobs:
+  msi:
+    name: Windows MSI (alpha ring)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install toolchain from rust-toolchain.toml
+        shell: bash
+        run: rustup show
+        working-directory: core
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core -> target
+          key: windows-msi
+      - name: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
+      - name: Build alpha MSI
+        shell: bash
+        run: bash scripts/build-alpha.sh
+      - name: Upload MSI
+        uses: actions/upload-artifact@v4
+        with:
+          name: spine-alpha-msi
+          path: artifacts/alpha/*.msi
+          retention-days: 30
+          if-no-files-found: error
+      - name: Upload BUILDS.md
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spine-alpha-msi-builds-log
+          path: artifacts/alpha/BUILDS.md
+          retention-days: 30
+          if-no-files-found: ignore
+
+  apk:
+    name: Android APK (alpha ring)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Parse compileSdk from app/build.gradle.kts
+        id: gradle-sdk
+        run: |
+          set -euo pipefail
+          SDK=$(grep -oE 'compileSdk[[:space:]]*=[[:space:]]*[0-9]+' \
+                  apps/mobile/android/app/build.gradle.kts \
+                | grep -oE '[0-9]+' | head -1)
+          test -n "$SDK" || { echo "could not parse compileSdk" >&2; exit 1; }
+          echo "sdk=$SDK" >> "$GITHUB_OUTPUT"
+          echo "compileSdk=$SDK"
+      - uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: '11076708'
+          packages: 'platforms;android-${{ steps.gradle-sdk.outputs.sdk }} build-tools;${{ steps.gradle-sdk.outputs.sdk }}.0.0'
+      - uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r27c
+          add-to-path: false
+      - name: Install toolchain from rust-toolchain.toml
+        run: rustup show
+        working-directory: core
+      - name: Add aarch64-linux-android target
+        run: rustup target add aarch64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: core -> target
+          key: android-apk
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-ndk
+      - name: Build APK
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: bash scripts/build-apk.sh
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: spine-alpha-apk
+          path: artifacts/apk/*.apk
+          retention-days: 30
+          if-no-files-found: error
+      - name: Upload BUILDS.md
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spine-alpha-apk-builds-log
+          path: artifacts/apk/BUILDS.md
+          retention-days: 30
+          if-no-files-found: ignore
+      - name: Upload staged libspine_jni.so (diagnostic fallback)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spine-jni-so-arm64-v8a
+          path: apps/mobile/android/app/src/main/jniLibs/arm64-v8a/libspine_jni.so
+          retention-days: 14
+          if-no-files-found: ignore

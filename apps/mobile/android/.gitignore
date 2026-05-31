@@ -1,0 +1,24 @@
+# Gradle
+.gradle/
+.kotlin/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+captures/
+local.properties
+
+# Android build outputs
+app/build/
+app/release/
+app/src/main/jniLibs/*/libspine_jni.so
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# IDE
+*.hprof

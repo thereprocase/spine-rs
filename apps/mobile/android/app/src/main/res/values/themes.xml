@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Theme.Spine — Material3 base, day/night adaptive.
+      Compose owns the actual color scheme; this theme exists so the
+      manifest's android:theme reference resolves and the splash/system
+      bars get a sane default before Compose takes over.
+    -->
+    <style name="Theme.Spine" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

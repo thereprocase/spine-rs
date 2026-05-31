@@ -1,0 +1,9 @@
+[package]
+name = "spine-kindle"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+mobi = "0.8.0"
+image = "0.25"
+thiserror = { workspace = true }

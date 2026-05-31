@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ (API 31+) requires dataExtractionRules to be declared even
+  when there is nothing to back up. `allowBackup=false` is already set in
+  the manifest; this file satisfies the declared @xml resource.
+
+  Empty <cloud-backup> and <device-transfer> stanzas document "nothing to
+  extract, nothing to transfer" explicitly — the lint-quiet equivalent of
+  `<dataExtractionRules/>`.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+    </device-transfer>
+</data-extraction-rules>

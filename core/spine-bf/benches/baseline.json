@@ -1,0 +1,46 @@
+{
+  "_README": "Pinned baseline + ceiling for Sprint 19 perf gate. baseline_us = the median measured on dev hardware (Linux 6.6 / WSL2, NVMe, dev laptop) at smoke config (--warm-up-time 1 --measurement-time 2 --sample-size 20). ceiling_us = the value above which CI flags a regression. Entries marked `informational: true` are reported but never counted toward the gate — they conflate per-call cost with iter-count due to graph-state compounding (internal design notes), so their median is sensitive to criterion's auto-tuned iter count and not a stable regression metric. Once Sprint 19 item #2 fix lands and these benches stop compounding, drop the `informational` flag and pin them as gates. Headroom on the gate-eligible cold benches is intentionally generous (~3× baseline) for phase-1 because GitHub Actions ubuntu-latest runners are slower + noisier than the dev box; the first 5-10 CI runs should produce the real CI-hardware distribution and ceilings re-pinned against CI medians + 2× variance band before flipping PERF_FAIL_ON_REGRESSION=1.",
+
+  "add_subject local-tag (no reconcile)": {
+    "baseline_us": 135,
+    "ceiling_us": 400
+  },
+  "add_subject lcsh (AlwaysUnmatched -> partial mint)": {
+    "baseline_us": 134,
+    "ceiling_us": 400
+  },
+  "add_instance no-reconcile": {
+    "baseline_us": 117,
+    "ceiling_us": 350
+  },
+  "add_instance reconcile (AlwaysUnmatched -> partial mint)": {
+    "baseline_us": 129,
+    "ceiling_us": 380
+  },
+
+  "add_subject local-tag (warm vocab — persistent store across iters)": {
+    "baseline_us": 1160,
+    "informational": true,
+    "note": "Conflates per-call cost with iter count due to graph-state compounding in `append_graph_triples` (item #2 finding). Will drop to ~135 µs band once the `insert_graph_triples` switch lands; re-pin as a gate then."
+  },
+  "add_subject lcsh-unmatched (warm vocab — persistent store)": {
+    "baseline_us": 884,
+    "informational": true,
+    "note": "Same iter-count-sensitivity as warm-vocab local-tag; same root cause."
+  },
+  "add_subject local-tag (1 thread, through Arc<Mutex> — isolates lock overhead)": {
+    "baseline_us": 921,
+    "informational": true,
+    "note": "Currently dominated by graph-size compounding, not mutex overhead. Real lock-overhead floor surfaces only after item #2 fix; pin as a gate then."
+  },
+  "add_subject local-tag (4 threads, same graph — Mutex<SpineStore> + SQLite contention)": {
+    "baseline_us": 867,
+    "informational": true,
+    "note": "Worst-case contention shape. Should land near 4× single-threaded floor + lock-acquisition overhead post-fix; pin as a gate then."
+  },
+  "add_subject local-tag (4 threads, distinct graphs — Mutex<SpineStore> only)": {
+    "baseline_us": 449,
+    "informational": true,
+    "note": "Pure mutex contention probe (no SQLite row overlap). Diff vs single-threaded post-fix is the actionable contention number; pin as a gate then."
+  }
+}

@@ -1,0 +1,19 @@
+[package]
+name = "spine-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+calibre-db = { path = "../calibre-db" }
+spine-api = { path = "../spine-api" }
+spine-db = { path = "../spine-db" }
+spine-bf = { path = "../spine-bf" }
+clap = { version = "4.4", features = ["derive"] }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde_json = { workspace = true }
+oxrdf = { workspace = true }
+anyhow = "1.0"
+
+spine-marc = { path = "../spine-marc" }

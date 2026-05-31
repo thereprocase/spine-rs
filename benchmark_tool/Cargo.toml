@@ -1,0 +1,9 @@
+[package]
+name = "benchmark_tool"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rusqlite = "0.31.0"
+calibre-db = { path = "../core/calibre-db" }
+spine-api = { path = "../core/spine-api" }

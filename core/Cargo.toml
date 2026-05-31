@@ -1,0 +1,60 @@
+[workspace]
+members = [
+    "calibre-db",
+    "spine-db",
+    "spine-bf",
+    "spine-marc",
+    "spine-onix",
+    "spine-epub-meta",
+    "spine-dc",
+    "spine-oeb",
+    "spine-fmt-epub",
+    "spine-fmt-mobi",
+    "spine-fmt-pdf",
+    "spine-fmt-docx",
+    "spine-fmt-txt",
+    "spine-fmt-html",
+    "spine-fmt-fb2",
+    "spine-fmt-rtf",
+    "spine-meta",
+    "spine-api",
+    "spine-srv",
+    "spine-cli", "spine-test-corpus", "spine-kindle",
+    "spine-jni",
+]
+resolver = "2"
+
+[workspace.dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+typeshare = "1.0"
+axum = { version = "0.7", features = ["multipart"] }
+tokio = { version = "1.0", features = ["full"] }
+tower = "0.5"
+# tower-http: `limit` is always enabled (body-size caps apply on every
+# transport). `cors` and `fs` are desktop-only concerns and are activated per
+# crate via the `desktop` feature so the mobile cdylib can drop them — see
+# TECH_DEBT §4.1.
+tower-http = { version = "0.6", default-features = false, features = ["limit"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+rusqlite = { version = "0.31", features = ["bundled"] }
+oxrdf = "0.1"
+oxigraph = "0.4"
+utoipa = { version = "4.0", features = ["axum"] }
+# Unified across spine-meta and spine-marc
+quick-xml = { version = "0.36", features = ["serialize"] }
+# Unified across spine-kindle, spine-marc, spine-meta, spine-srv
+thiserror = "2.0"
+# Unified across spine-meta and spine-srv; default-features=false for Android cross-compile
+zip = { version = "2.4", default-features = false, features = ["deflate"] }
+# reqwest: rustls-tls instead of native-tls for Android cross-compile
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+# subtle: constant-time byte comparison for bearer token verification
+subtle = "2.5"
+# once_cell: used by spine-jni for lazy static initialisation. Kept in workspace
+# to ensure a single copy in the dependency graph and to allow future crates to
+# share the same version without drift.
+once_cell = "1.19"

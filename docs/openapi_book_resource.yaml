@@ -1,0 +1,337 @@
+# NOTE — aspirational contract, not the implemented shape. Three parallel API
+# contracts currently drift (this YAML, spine_api::Book types, and actual
+# handler responses). Tracked in docs/TECH_DEBT.md §3.3. When the contracts
+# unify, this file becomes the canonical source and version jumps to 3.1.
+openapi: 3.1.0
+info:
+  title: Spine Library API
+  version: 0.2.0
+  description: |
+    Spine Library API contract.
+
+    The Book / Contributor / Instance / Item schemas at the top of this
+    file remain aspirational and drift from the actual `spine_api::Book`
+    typeshare types. Tracked in docs/TECH_DEBT.md §3.3.
+
+    The endpoints below the "Session 6 backend additions" marker
+    (storage, jobs/summary, loc/cache_status, library/recent,
+    library/list) align with the actual handlers shipped in Session 6
+    Treat them as the canonical contract going forward.
+
+    Bumped 3.0.3 → 3.1.0 in the same backfill commit per
+    Session 6 three-contract drift policy.
+paths:
+  /api/v1/book/{id}:
+    get:
+      summary: Get a specific Book/Work by ID
+      operationId: getBook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The URN or UUID of the Work
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '404':
+          description: Book not found
+components:
+  schemas:
+    Book:
+      type: object
+      required:
+        - id
+        - title
+        - instances
+      properties:
+        id:
+          type: string
+          description: "Internal Spine URN (e.g., urn:spine:work:1234)"
+        title:
+          type: string
+          description: "The primary title of the Work (BIBFRAME mainTitle)"
+        sortTitle:
+          type: string
+          description: "Title used for sorting, ignoring initial articles"
+        subtitle:
+          type: string
+        authors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contributor'
+        subjects:
+          type: array
+          items:
+            type: string
+          description: "List of subject headings (e.g., LCSH)"
+        instances:
+          type: array
+          items:
+            $ref: '#/components/schemas/Instance'
+          description: "Specific publications/editions of this Work"
+
+    Contributor:
+      type: object
+      required:
+        - name
+        - role
+      properties:
+        id:
+          type: string
+          description: "Authority URI if resolved (e.g., http://id.loc.gov/authorities/names/n79003304)"
+        name:
+          type: string
+        role:
+          type: string
+          description: "MARC relator code (e.g., 'aut', 'ill')"
+
+    Instance:
+      type: object
+      required:
+        - id
+        - items
+      properties:
+        id:
+          type: string
+        publisher:
+          type: string
+        publicationDate:
+          type: string
+          format: date
+        identifiers:
+          type: object
+          additionalProperties:
+            type: string
+          description: "Key-value pairs of identifiers (isbn, asin, doi)"
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+
+    Item:
+      type: object
+      required:
+        - id
+        - file_path
+      properties:
+        id:
+          type: string
+        file_path:
+          type: string
+          description: "Path to the digital file (e.g., EPUB, PDF) in the Spine library"
+        format:
+          type: string
+          description: "MIME type or file extension"
+        file_size:
+          type: integer
+          description: "Size in bytes"
+
+# =============================================================================
+# Session 6 backend additions (2026-04-24 autopilot)
+# Five endpoints landed across T4 Phase A. These align with the actual
+# handler shapes in core/spine-srv/src/api_v1.rs and the typeshare types
+# in core/spine-api/src/v1.rs.
+# =============================================================================
+
+paths_session6:
+  # NOTE: OpenAPI 3.1 does not allow duplicate top-level `paths` keys.
+  # The entries below should be merged into the top `paths:` block during
+  # the next full YAML rewrite. Kept under `paths_session6:` here as a
+  # stage-area to land them in the same backfill commit without
+  # restructuring the whole file.
+
+  /api/v1/storage:
+    get:
+      summary: Storage stats for the active library
+      description: |
+        Returns byte counts for the current library's spine.db and
+        metadata.db, plus the recursive sum of cover.jpg files (excludes
+        EPUB blobs — Footer surfaces "metadata storage" cleanly), plus
+        book count and last-import timestamp.
+      operationId: getStorage
+      responses:
+        '200':
+          description: Storage info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageInfo'
+
+  /api/v1/jobs/summary:
+    get:
+      summary: Aggregate job state counts
+      description: |
+        Aggregates over the in-memory job_status HashMap into counts by
+        terminal state. Bounded by JOB_TTL_SECS (1h since Session 6 B3
+        bump) — completed/failed jobs evict after 1 hour.
+      operationId: getJobsSummary
+      responses:
+        '200':
+          description: Job counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobsSummary'
+
+  /api/v1/loc/cache_status:
+    get:
+      summary: LoC cache freshness (stub)
+      description: |
+        Returns LoC cache state. **Currently a stub** per Option 2 —
+        spine-meta has no cache layer today (LocClient is point-of-call
+        SRU only). Returns `{ present: false, entries: 0,
+        lastRefreshedAtMs: null }` until the cache layer lands. Frontend
+        renders "loc cache · not enabled" gracefully. See
+        docs/TECH_DEBT.md §5.X.
+      operationId: getLocCacheStatus
+      responses:
+        '200':
+          description: LoC cache status (always {present:false} until layer lands)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocCacheStatus'
+
+  /api/v1/library/recent:
+    post:
+      summary: Push a library path into the recent-libraries snapshot
+      description: |
+        Idempotent: pushes to front, dedups, truncates to 5. Also sets
+        `current`. Per Session 6 Option B push-down — Tauri shell mirrors
+        every DesktopConfig.recent_libraries mutation here so spine-srv's
+        in-memory snapshot stays current. Tauri remains the durable store;
+        spine-srv state is transient (TECH_DEBT §3.X "spine-srv
+        recent_libraries is in-memory only").
+      operationId: pushRecentLibrary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path:
+                  type: string
+                  description: Absolute filesystem path to the library directory
+      responses:
+        '204':
+          description: Pushed; snapshot updated
+
+  /api/v1/library/list:
+    get:
+      summary: List recent libraries + the current one
+      description: |
+        Returns the in-memory snapshot maintained by Option B push-down.
+        Frontend TitleBar library-switcher dropdown reads this on mount
+        and on library-switch event.
+      operationId: getLibraryList
+      responses:
+        '200':
+          description: Library list snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibraryList'
+
+components_session6:
+  # Same staging-area note: merge into top `components:` during next
+  # full rewrite. Kept under `components_session6:` to land cleanly.
+
+  schemas:
+    StorageInfo:
+      type: object
+      required:
+        - spineDbBytes
+        - metadataDbBytes
+        - coversBytes
+        - bookCount
+      properties:
+        spineDbBytes:
+          type: integer
+          format: int64
+          description: Size of spine.db in bytes
+        metadataDbBytes:
+          type: integer
+          format: int64
+          description: Size of calibre metadata.db in bytes
+        coversBytes:
+          type: integer
+          format: int64
+          description: Recursive sum of cover.jpg files (excludes EPUB blobs)
+        bookCount:
+          type: integer
+          format: int64
+          description: Number of books in the library (calibre books table count)
+        lastImportAtMs:
+          type: [integer, "null"]
+          format: int64
+          description: |
+            Unix epoch milliseconds of the most recent ingest (MAX of
+            calibre books.timestamp). Null when library is empty.
+
+    JobsSummary:
+      type: object
+      required:
+        - pending
+        - running
+        - completed
+        - failed
+      properties:
+        pending:
+          type: integer
+          format: int32
+        running:
+          type: integer
+          format: int32
+        completed:
+          type: integer
+          format: int32
+          description: Bounded by JOB_TTL_SECS (1h)
+        failed:
+          type: integer
+          format: int32
+          description: Bounded by JOB_TTL_SECS (1h)
+
+    LocCacheStatus:
+      type: object
+      required:
+        - present
+        - entries
+      properties:
+        present:
+          type: boolean
+          description: Whether a LoC cache layer exists. Currently always false.
+        entries:
+          type: integer
+          format: int64
+          description: Number of cached LoC records. Currently always 0.
+        lastRefreshedAtMs:
+          type: [integer, "null"]
+          format: int64
+          description: |
+            Unix epoch milliseconds of last cache refresh. Currently always null.
+
+    LibraryList:
+      type: object
+      required:
+        - recent
+      properties:
+        recent:
+          type: array
+          items:
+            type: string
+          description: |
+            Recent library paths, most-recent first. Capped at 5,
+            deduplicated. Mirror of Tauri's DesktopConfig.recent_libraries.
+        current:
+          type: [string, "null"]
+          description: |
+            Currently-open library path. Null if no library is open
+            (first-run state, before Bootstrap completes).

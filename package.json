@@ -1,0 +1,19 @@
+{
+  "name": "spine-monorepo",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm dev:desktop",
+    "dev:desktop": "pnpm --filter appsdesktop tauri dev",
+    "dev:frontend": "pnpm --filter appsdesktop dev",
+    "dev:srv": "cd core && cargo run -p spine-srv",
+    "build": "pnpm -r build && cd core && cargo build",
+    "alpha": "bash scripts/build-alpha.sh",
+    "apk": "bash scripts/build-apk.sh",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test && cd core && cargo test"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  },
+  "packageManager": "pnpm@10.33.2"
+}

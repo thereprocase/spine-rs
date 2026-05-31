@@ -1,0 +1,75 @@
+/*
+ * Host-page styles for Spine's foliate-js reader shell.
+ *
+ * Lives next to index.html (not the vendored foliate bundle) — the
+ * vendor-foliate.mjs preserve list keeps this file across re-runs.
+ *
+ * Pulled out of an inline <style> block so the CSP can drop
+ * 'unsafe-inline' from style-src without losing the prefers-color-scheme
+ * fallback and the status/error overlays. See code review of N1.
+ */
+
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --fg: #111111;
+  --muted: rgba(17, 17, 17, 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111111;
+    --fg: #ececec;
+    --muted: rgba(236, 236, 236, 0.55);
+  }
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+}
+
+foliate-view {
+  display: block;
+  height: 100vh;
+  width: 100vw;
+}
+
+#status, #error {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  gap: 12px;
+}
+
+#status[hidden], #error[hidden] { display: none; }
+
+#status .label {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+#error .title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+#error .detail {
+  font: 13px/1.4 ui-monospace, "SF Mono", Consolas, monospace;
+  color: var(--muted);
+  max-width: 30em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
