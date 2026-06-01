@@ -13,8 +13,9 @@ Legend: ✅ works · 🟡 partial / rough · 🔴 known-broken / not done
 
 The Rust core is the strongest part of the project.
 
-- ✅ Opens an existing **calibre library**; the on-disk `metadata.db` stays
-  byte-compatible (custom `calibre_collation` registered on write).
+- ✅ Opens an existing on-disk **library**; the `metadata.db` catalog stays
+  interoperable (the custom `calibre_collation` SQLite collation is registered
+  on write, so existing libraries open without conversion).
 - ✅ **BIBFRAME 2.0** metadata stored as RDF triples in a `spine.db` sidecar, one
   named graph per book.
 - ✅ **Reconcile-first identity** against id.loc.gov, with local minting only for
@@ -33,9 +34,9 @@ The single HTTP interface every frontend uses.
 - ✅ Metadata inspector/editor endpoints; reconcile drawer + reconcile-first
   ingest hook; library backup.
 - ✅ Inferred-graph read/decide endpoints (asserted vs. inferred promotion).
-- 🟡 Format-**conversion** pipeline (the calibre "ebook-convert" equivalent) is
-  designed (`docs/ADR_017`, `docs/ADR_018`) and partially built — not yet a
-  general convert-anything-to-anything path.
+- 🟡 Format-**conversion** pipeline (a general `ebook-convert`-style any-format
+  path) is designed (`docs/ADR_017`, `docs/ADR_018`) and partially built — not
+  yet a general convert-anything-to-anything path.
 - 🟡 OpenAPI spec drifts from the live handlers in places (`docs/TECH_DEBT.md`).
 
 ## Desktop app — `apps/desktop` 🟡 (exists, partial)

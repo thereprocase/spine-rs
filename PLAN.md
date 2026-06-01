@@ -1,6 +1,6 @@
-# Calibre, reborn
+# Spine — design plan
 
-A plan for replacing calibre's Qt-and-Python body with a Rust core and a modern split frontend, keeping the part people actually love (the conversion pipeline, the library model, the metadata sources) and amputating the parts that blocked calibre from ever reaching phones (Qt, QtWebEngine, PyQt's desktop-only idiom).
+A plan for a Rust-core e-book library manager with a modern split frontend: a solid library model, real metadata sources, and a conversion pipeline, on a foundation designed from day one to reach phones, not just desktops — no Qt, no QtWebEngine, no desktop-only idiom. Where Spine ports proven, format-specific logic from the upstream [calibre](https://github.com/kovidgoyal/calibre) project (GPL-3.0), it credits it; see §10.
 
 Primary platforms: **Windows, macOS, Linux, Android.** iOS is welcome if it doesn't cost extra — meaning if the React Native mobile codebase happens to compile for it and Apple's free developer provisioning is enough to sideload. No App Store spend.
 
@@ -11,7 +11,7 @@ Primary platforms: **Windows, macOS, Linux, Android.** iOS is welcome if it does
 - **`thereprocase/calibre`** — clean fork of `kovidgoyal/calibre`. Kept as the reference implementation, the license lineage, and a pullable upstream (`git remote add upstream kovidgoyal/calibre`) for format fixes and metadata-source patches we want to port. No invasive changes land here. Occasional cherry-picks back out.
 - **`thereprocase/spine`** *(pending `crates.io` / `npm` / domain availability check — fallback **ledger**)* — new repo, new language choices, new architecture. GPL-3.0 because we will inevitably port algorithmic decisions and format-specific quirks from upstream calibre, and even under a clean-room interpretation keeping the same license avoids every future "is this derivative?" argument. README and per-crate `NOTICE` files point back to upstream calibre for attribution.
 
-**On the name.** Calibre's LICENSE is vanilla GPL-3.0 with no naming clause; COPYRIGHT has no project-wide trademark restriction; calibre-ebook.com publishes no trademark policy. *Legally*, a fork could be named anything. *Culturally*, Kovid has a public history of being unhappy about forks that carry "calibre" in the project name, and common-law trademark arguably attaches to a name this distinctive in this product category. Not a fight worth picking for essentially zero benefit. **Spine** is the EPUB-spec term for a book's ordered content list — native to the domain, short, no collision with active projects on first check.
+**On the name.** Spine is named on its own terms, not as a derivative brand. **Spine** is the EPUB-spec term for a book's ordered content list — native to the domain, short, and with no collision with active projects on first check. (A new project in this category should pick a distinctive name rather than one adjacent to an existing tool's, both to stand on its own and to avoid any trademark ambiguity.)
 
 Why two repos and not one branch: calibre's `master` moves ~50 commits/week. A divergent rewrite inside the same repo either blocks upstream syncs or becomes a permanent orphan branch. A sibling repo lets us cherry-pick from the fork whenever upstream fixes a format parser we care about, without merge-conflict archaeology.
 
@@ -79,7 +79,7 @@ The seam is **the API contract, not a language boundary**. Everything below the 
 
 ---
 
-## 3. Demolition list (what we cut from calibre)
+## 3. Demolition list (what we deliberately leave out)
 
 Direct carryover from our earlier conversation; dated here for the PR body.
 
@@ -89,7 +89,7 @@ Direct carryover from our earlier conversation; dated here for the PR body.
 
 **The Qt ebook editor.** Dead without QtWebEngine. No modern replacement plan. Sigil exists; it's fine.
 
-**Calibre's custom HTTP server.** Kovid wrote his own. We use axum.
+**A bespoke custom HTTP server.** Upstream ships its own. We use axum.
 
 **Device plugins.** Calibre's USB-to-Kindle plugin architecture. The new phone *is* the device. If someone needs desktop→reader sync later, resurface via a thin WebUSB/MTP plugin on the Tauri side only.
 
@@ -810,7 +810,7 @@ The OPDS + REST boundary means a future proprietary mobile client (someone else'
 
 **Desktop signing.** Windows Authenticode is ~$200/yr EV cert; macOS notarization is $99/yr Apple Dev. Until someone volunteers, desktop builds ship unsigned with README instructions on how to allow them. Linux doesn't care.
 
-**Kovid's reaction.** He's been openly hostile to calibre forks in the past. This is not a repo that expects to send PRs upstream; this is a repo that expects to pull upstream fixes one-way and otherwise leave Kovid alone. No claim of being "the next calibre" in any user-facing copy.
+**Upstream relationship.** Spine pulls upstream fixes one-way and does not send changes back upstream. No claim of being "the next calibre" appears in any user-facing copy — Spine stands on its own.
 
 **LoC SRU reliability.** Field-observed ~5-10% error rate (timeouts, 500s, malformed responses). LoC BIBFRAME endpoint covers *new* cataloging only; historical records are MARC-only via SRU. Mitigation: retry-with-backoff mandatory, offline cache required, bundle LCSH/LCNAF/LCGFT dumps as build-time assets for offline authority resolution.
 
@@ -826,7 +826,7 @@ The OPDS + REST boundary means a future proprietary mobile client (someone else'
 
 **Backup granularity.** `spine.db` + `metadata.db` + raw files. User deleting `spine.db` loses user-authored graph edits (annotations, manual enrichment) but nothing machine-ingested (`raw_records` enables re-derivation). Open question: what's the backup-unit users think in? Library folder? Per-book? Needs a doc before Phase 3 ships mobile.
 
-**Handling upstream calibre schema evolution.** If Kovid ships a `metadata.db` schema change (rare but has happened), Spine must follow or diverge. Open question: auto-follow via migration? Pin to Last Known Good schema? Document response plan before Phase 2.
+**Handling upstream schema evolution.** If upstream ships a `metadata.db` schema change (rare but has happened), Spine must follow or diverge. Open question: auto-follow via migration? Pin to Last Known Good schema? Document response plan before Phase 2.
 
 **iOS FFI verification for in-process axum.** Plan asserts iOS lets us run the in-process axum router through app background cycles. In-process means no separate process; should work, but iOS background execution is famously restrictive. Verify empirically on a real iOS build in Phase 0.
 
@@ -856,7 +856,7 @@ Nothing in Phase 0 is creative. It's all preamble. The first interesting commit 
 
 Rationale: EPUB-spec native term (the `<spine>` element is the ordered list of content in an EPUB), short, pronounceable, no collision with existing e-book projects on first check, clean of any calibre-derived branding.
 
-Fallback: **Ledger**. Dropped from shortlist: *Caliber* (US spelling — deliberately adjacent to calibre, legally defensible but picks a fight), *Reprobook*/*Reproshelf* (brand continuity fine but ties the project to one maintainer's handle), *Longhand* (cute but doesn't say "books").
+Fallback: **Ledger**. Dropped from shortlist: *Caliber* (too adjacent to an existing tool's name), several handle-derived names (tie the project too closely to a personal username), *Longhand* (cute but doesn't say "books").
 
 Verify availability in Phase 0 step 1 before any commits land.
 

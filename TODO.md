@@ -7,8 +7,8 @@ in priority order. This is a parked-mid-stream project, so a lot of these are
 
 ## Core / backend (`core/`, `core/spine-srv`)
 
-- [ ] Finish the **format-conversion pipeline** (the calibre `ebook-convert`
-      equivalent): wire the conversion IR (`docs/ADR_017`) through a real
+- [ ] Finish the **format-conversion pipeline** (a general `ebook-convert`-style
+      any-format path): wire the conversion IR (`docs/ADR_017`) through a real
       any-format → EPUB path with the deterministic EPUB writer (`docs/ADR_018`).
 - [ ] Close the **OpenAPI ↔ handler drift** so the generated client matches the
       live `spine-srv` surface.
