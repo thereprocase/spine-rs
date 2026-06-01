@@ -1,6 +1,6 @@
 <h1 align="center">Spine</h1>
 
-<p align="center"><em>Calibre, reborn — a Rust-core e-book library manager for the desktop and the phone.</em></p>
+<p align="center"><em>A Rust-core e-book library manager — for the desktop and the phone.</em></p>
 
 <p align="center">
   <strong>Status: pre-alpha.</strong> The core works; the apps are coming together; there are bugs.
@@ -15,11 +15,11 @@
 
 ## What it is
 
-[calibre](https://github.com/kovidgoyal/calibre) is the e-book library manager
-most people use. It's also Python + Qt, which is why it has never really reached
-phones. **Spine** keeps the parts people love — the library model, the metadata
-sources, the conversion pipeline — and rebuilds the body in **Rust** with modern,
-split frontends that can run on a desktop *or* an Android device.
+**Spine** is an e-book library manager built around a Rust core, with modern,
+split frontends that run on a desktop *or* an Android device. It keeps the parts
+people love about a good library manager — a solid library model, real metadata
+sources, a conversion pipeline — and builds them on a foundation designed from
+day one to reach phones, not just laptops.
 
 Two ideas make Spine different under the hood:
 
@@ -31,14 +31,14 @@ Two ideas make Spine different under the hood:
 - **BIBFRAME-native metadata.** Internally, metadata is **BIBFRAME 2.0** RDF, with
   identities reconciled against the Library of Congress (id.loc.gov) before
   anything is minted locally. MARC21, ONIX, EPUB OPF, and Dublin Core all map in
-  and out. The on-disk library stays **byte-compatible with calibre's
-  `metadata.db`**, so an existing calibre library opens without conversion.
+  and out. The on-disk library uses a standard `metadata.db`, so an existing
+  library opens without conversion.
 
 ## Component status
 
 | Component | Path | What it is | State |
 |---|---|---|---|
-| **Library engine** | `core/` (~24 crates) | calibre-compatible library + BIBFRAME metadata store, format readers/writers | **Works.** Opens a calibre library; reads/writes metadata; reconcile-first identity. The most mature part. |
+| **Library engine** | `core/` (~24 crates) | library + BIBFRAME metadata store, format readers/writers | **Works.** Opens an existing library; reads/writes metadata; reconcile-first identity. The most mature part. |
 | **Backend service** | `core/spine-srv` | axum HTTP API — the one interface to the core | **Exists, partial.** Library browse / search / edit / reconcile / backup endpoints are wired; the format-conversion pipeline is in progress. |
 | **Desktop app** | `apps/desktop` | Tauri 2 + React | **Exists, partial.** Library browse, search, metadata inspector/editor, reconcile drawer, backup, settings. A real daily-driver shell, still missing features. |
 | **Native Android app** | `apps/mobile/android` | Kotlin + Jetpack Compose, native EPUB reader | **Coming together — buggy.** The intended mobile future. Imports and renders EPUBs without loading the whole book into JS. Actively churning; expect rough edges. |
@@ -64,7 +64,7 @@ bugs, and **[TODO.md](TODO.md)** for what's next.
         ┌──────────────────────────────────────────────┐
         │  Rust core (~24 crates)                       │
         │  spine-bf (BIBFRAME write API) · spine-fmt-*  │   core/
-        │  metadata.db (calibre-compatible)             │
+        │  metadata.db (library catalog)                │
         │  spine.db (BIBFRAME RDF sidecar)              │
         └───────────────────────────────────────────────┘
 ```
@@ -110,9 +110,9 @@ PLAN.md              the long-form project plan / roadmap
 ## License
 
 GPL-3.0 — see [LICENSE](LICENSE). Spine ports algorithmic and format-specific
-decisions from upstream calibre (also GPL-3.0); per-area attribution lives
-alongside the relevant code. "Spine" is the EPUB-spec term for a book's ordered
-content list.
+decisions from upstream [calibre](https://github.com/kovidgoyal/calibre) (also
+GPL-3.0); per-area attribution lives alongside the relevant code. "Spine" is the
+EPUB-spec term for a book's ordered content list.
 
 ## Acknowledgements
 
